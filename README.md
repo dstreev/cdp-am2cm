@@ -9,6 +9,7 @@ alias apt=ansible-playbook --tags
 
 ## Prep
 **Build Local Repo**
+[Repo Sync](devops/repo_sync.yaml)
 `ap devops/repo_sync.yaml`
 Then check and unpack CM tarball
 
@@ -17,21 +18,21 @@ Then check and unpack CM tarball
 - Backup the Databases
 
 ### AM2CM Tooling
-**Build and Deploy Tools**
 __SKIP IF USING MOD'd version__
+**[AM2CM Build-out](tooling/am2cm_build.yaml)**
 `ap tooling/am2cm_build.yaml`
 
-**Deploy AM2CM on to an Edge Node**
+**[AM2CM Install](tooling/am2cm_install.yaml)**
 `ap tooling/am2cm_install.yaml`
 
-**Deploy the Ranger Policy Migration Tool**
+**[Deploy Ranger Migration Tool](tooling/ranger_migration_install.yaml)**
 `ap tooling/ranger_migration_install.yaml`
 
-**Configure AM2CM**
+**[Configure AM2CM for Environment](tooling/am2cm_configure.yaml)**
 `ap tooling/am2cm_configure.yaml`
 
 ## CM Installation
-**Install Cloudera Manager**
+**[Install Cloudera Manager](cm/cm_install.yaml)**
 `ap cm/cm_install.yaml`
 This installs CM and creates the databases for CM and Report Manager and deploys JDBC jars and MariaDB Clients where needed.
 
@@ -47,7 +48,7 @@ This installs CM and creates the databases for CM and Report Manager and deploys
 
 ## Transition to Cloudera Manager (Step #1)
 **NOTE: Waiting for silent mode in am2cm Tool**
-
+[Get an Ambari Blueprint](tooling/ambari_blueprint.yaml)
 `ap tooling/ambari_blueprint.yaml`
 
 Goto edge and run:
@@ -56,17 +57,19 @@ cd am2cm-conversion/
 ../am2cm-1.0-SNAPSHOT/am2cm.sh -bp HOME90-blueprint.json  -dt HOME90-cm_template.json
 ```
 then on the ansible host...
+[Submit Template to CM](tooling/transition.yaml)
 `apt "submit" tooling/transition.yaml`
 
 
 #### Or with Silent Mode
 Once the `-s` mode is available for am2cm run the entire `transition.yaml`:
+[Transition](tooling/transition.yaml)
 `ap tooling/transition.yaml` 
 
 ## Deployment in Cloudera Manager (Step #2)
 
 In Cloudera Manager 'Download' and 'Distribute' the Parcel. Do not 'Activate' yet.
-
+[Save HDFS Namespace](devops/save_namespace.yaml)
 `ap devops/save_namespace.yaml`
 Ensure Ambari Cluster is Health and that HDFS is in good shape:
 - Save HDFS Namespace
@@ -75,7 +78,7 @@ Ensure Ambari Cluster is Health and that HDFS is in good shape:
 
 In Ambari, shutdown all Services and 'Stop' and 'Disable' all **Ambari Agents**.  The **takeover** starts NOW.
 
-Disable Ambari Agents
+[Disable Ambari Agents](ambari/agent_disable.yaml)
 `ap ambari/agent_disable.yaml`
 
 In Cloudera Manager, 'Activate' the Parcel on all hosts.  This will reconfigure all the symlinks for the cluster configurations.
@@ -84,7 +87,7 @@ In Cloudera Manager, 'Activate' the Parcel on all hosts.  This will reconfigure 
 The goal here is to NOT start services until required and to minimize HDFS restarts to manage time.
 
 ### First Phase Cleanup
-- Reset Kafka and ZooKeeper Id's
+- [Reset Kafka and ZooKeeper Id's](reset/cm_reset_phase_1.yaml)
 > `ap reset/cm_reset_phase_1.yaml`  
 - Start ZooKeeper
 - Remove /hadoop-ha znode
@@ -152,6 +155,7 @@ Start Ranger Services
 - Action - Setup Ranger Plugin Services. (Adds linked repos to Ranger Services)
 
 ### Migrate Ranger Policies
+[Ranger Service Upsert to new Service Repos](tooling/ranger_service_migration.yaml)
 `ap tooling/ranger_service_migration.yaml`
 Failures expected when service repos aren't available on either side.
 - HDFS
