@@ -25,10 +25,10 @@
         - server
 
 # Required to run db client to init the Database
-- import_playbook:     ../../environment/db/mariadb_client.yaml
+- import_playbook:     ../env/db/mariadb_client.yaml
 
 # Install JDBC Drivers
-- import_playbook:     ../../environment/db/jdbc_setup.yaml
+- import_playbook:     ../env/db/jdbc_setup.yaml
 
 # Create DB Instance
 - import_playbook:     db_setup.yaml
