@@ -1,0 +1,13 @@
+- hosts: namenode
+  become: yes
+  become_user: hdfs
+
+  tasks:
+    - name: Enter Safe Mode
+      shell: hdfs dfsadmin -safemode enter
+
+    - name: Save Namespace
+      shell: hdfs dfsadmin -saveNamespace
+
+    - name: Leave Safe Mode
+      shell: hdfs dfsadmin -safemode leave

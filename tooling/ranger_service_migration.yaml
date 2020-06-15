@@ -1,0 +1,21 @@
+#- import_playbook: ranger_migration_install.yaml
+
+- hosts: edge_primary
+
+  tasks:
+    - name: Migrate Service Repo Entries
+      command:
+        cmd: ./ranger_policy_migration.py -u {{ ranger_admin_url }} -n {{ ranger_admin_user }} -p {{ ranger_admin_password }} -f {{ item.from }} -t {{ item.to }} }} -l {{ item.log }}
+      args:
+        chdir: ./cm-transition
+      with_items:
+        - { from: '{{ ambari_cluster_name }}_hadoop', to: 'cm_hdfs', log: '{{ ansible_date_time.iso8601_basic_short }}_hdfs.log' }
+        - { from: '{{ ambari_cluster_name }}_hive', to: 'cm_hive', log: '{{ ansible_date_time.iso8601_basic_short }}_hive.log' }
+        - { from: '{{ ambari_cluster_name }}_hbase', to: 'cm_hbase', log: '{{ ansible_date_time.iso8601_basic_short }}_hbase.log' }
+        - { from: '{{ ambari_cluster_name }}_yarn', to: 'cm_yarn', log: '{{ ansible_date_time.iso8601_basic_short }}_yarn.log' }
+        - { from: '{{ ambari_cluster_name }}_kafka', to: 'cm_kafka', log: '{{ ansible_date_time.iso8601_basic_short }}_kafka.log' }
+        - { from: '{{ ambari_cluster_name }}_knox', to: 'cm_knox', log: '{{ ansible_date_time.iso8601_basic_short }}_knox.log' }
+        - { from: '{{ ambari_cluster_name }}_solr', to: 'cm_solr', log: '{{ ansible_date_time.iso8601_basic_short }}_solr.log' }
+        - { from: '{{ ambari_cluster_name }}_atlas', to: 'cm_atlas', log: '{{ ansible_date_time.iso8601_basic_short }}_atlas.log' }
+
+
