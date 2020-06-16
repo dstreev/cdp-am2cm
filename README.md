@@ -7,6 +7,10 @@ alias ape=ansible-playbook --extra-vars
 alias apt=ansible-playbook --tags
 ```
 
+## Assumptions
+- [ ] Source Cluster (Ambari) is NOT Kerberized.  That's because we are getting a Kerberos ticket for any of the playbooks run against the Ambari Cluster.  It 'can' be done, just hasn't for this version of the process.
+- [ ] Running CDP-DC (Ambari 7.1.0+)
+
 ## Prep
 **Build Local Repo**
 [Repo Sync](devops/repo_sync.yaml)
@@ -31,96 +35,119 @@ __SKIP IF USING MOD'd version__
 **[Configure AM2CM for Environment](tooling/am2cm_configure.yaml)**
 `ap tooling/am2cm_configure.yaml`
 
-## CM Installation
+## Step #1 - Cloudera Manager Installation
 **[Install Cloudera Manager](cm/cm_install.yaml)**
-`ap cm/cm_install.yaml`
+
+- [ ] `ap cm/cm_install.yaml`
+
 This installs CM and creates the databases for CM and Report Manager and deploys JDBC jars and MariaDB Clients where needed.
 
 ### Setup Cloudera Manager for Transition
-- Set Networking/Repo Locations for Local Repos
-- Adjust Distribution Threads 
-- Set CM TLS
-- Configure Kerberos
-- Add Hosts
+- [ ] Add License Key
+- [ ] Skip Cluster Wizard
+- [ ] Set Networking/Repo Locations for Local Repos
+- [ ] Adjust Distribution Threads 
+- [ ] Set CM TLS
+    - Restart CM
+- [ ] Add Hosts
 > Need to have all hosts added that are used in Ambari Cluster
-- Add Cloudera Management Service
-    - Start the CMS Service
+- [ ] Add Cloudera Management Service
+    - [ ] Start the CMS Service
 
-## Transition to Cloudera Manager (Step #1)
+## Step #2 - Transition to Cloudera Manager
+
 **NOTE: Waiting for silent mode in am2cm Tool**
-[Get an Ambari Blueprint](tooling/ambari_blueprint.yaml)
+
+- [ ] [Get an Ambari Blueprint](tooling/ambari_blueprint.yaml)
+
 `ap tooling/ambari_blueprint.yaml`
 
-Goto edge and run:
+- [ ] Goto edge and run:
 ```
 cd am2cm-conversion/
 ../am2cm-1.0-SNAPSHOT/am2cm.sh -bp HOME90-blueprint.json  -dt HOME90-cm_template.json
 ```
 then on the ansible host...
-[Submit Template to CM](tooling/transition.yaml)
+
+- [ ] [Submit Template to CM](tooling/transition.yaml)
+
 `apt "submit" tooling/transition.yaml`
 
 
 #### Or with Silent Mode
 Once the `-s` mode is available for am2cm run the entire `transition.yaml`:
 [Transition](tooling/transition.yaml)
+
 `ap tooling/transition.yaml` 
 
-## Deployment in Cloudera Manager (Step #2)
+## Step #3 - Deployment in Cloudera Manager
 
-In Cloudera Manager 'Download' and 'Distribute' the Parcel. Do not 'Activate' yet.
-[Save HDFS Namespace](devops/save_namespace.yaml)
+In Cloudera Manager:
+
+- [ ] 'Download' Cloudera Runtime Parcel
+- [ ] 'Distribute' the Parcel. Do not 'Activate' yet.
+ 
+- [ ] [Save HDFS Namespace on Running Cluster](devops/save_namespace.yaml)
+
 `ap devops/save_namespace.yaml`
-Ensure Ambari Cluster is Health and that HDFS is in good shape:
-- Save HDFS Namespace
-- Ensure no underreplicated blocks
-- Check the 'Exclude Hosts' list is empty. IE: No dead/inactive datanodes.
 
-In Ambari, shutdown all Services and 'Stop' and 'Disable' all **Ambari Agents**.  The **takeover** starts NOW.
+The **takeover** starts NOW.
 
-[Disable Ambari Agents](ambari/agent_disable.yaml)
+In Ambari:
+
+- [ ] Shutdown all Services 
+- [ ] [Disable Ambari Agents](ambari/agent_disable.yaml)
+
 `ap ambari/agent_disable.yaml`
 
-In Cloudera Manager, 'Activate' the Parcel on all hosts.  This will reconfigure all the symlinks for the cluster configurations.
+In Cloudera Manager:
 
-## Reseting the Hadoop Environment (Step #3)
+- [ ] Activate the Parcel on all hosts.  
+> This will reconfigure all the symlinks for the cluster configurations.
+
+## Step #4 - Reseting the Hadoop Environment
 The goal here is to NOT start services until required and to minimize HDFS restarts to manage time.
 
 ### First Phase Cleanup
-- [Reset Kafka and ZooKeeper Id's](reset/cm_reset_phase_1.yaml)
-> `ap reset/cm_reset_phase_1.yaml`  
-- Start ZooKeeper
-- Remove /hadoop-ha znode
-- Deploy the HDFS Clients
-- From Namenode as `hdfs` user:
-    - formatZK
-    > `hdfs zkfc -formatZK`
+- [ ] [Reset Kafka and ZooKeeper Id's](reset/cm_reset_phase_1.yaml)
 
-## Configuring Basic Services (Step #4)
+`ap reset/cm_reset_phase_1.yaml`
+  
+- [ ] Add `-Dzookeeper.skipACL=yes` to 'Java Configuration Options for Zookeeper Server'
+> This allow zNode adjustments without auth on the zNode.  Helpful for maintenance when zNodes had been created and secured by a SASL user.
+- [ ] Start ZooKeeper
+- [ ] Remove /hadoop-ha zNode
+> HDFS HA needs to be reset for Cloudera Manager
+- [ ] Deploy the HDFS Clients
+From Namenode as `hdfs` user:
+- [ ] formatZK `hdfs zkfc -formatZK`
+
+## Step #5 - Configuring Basic Services
 ### Enable TLS Security
-- TLS
+- [ ] TLS
 
-### Add Service
-Yarn Queue Manager 
-- Set YARN Dependency in YARN Config.
-KNOX
+### Add Services
+- [ ] Yarn Queue Manager 
+- [ ] Set YARN Dependency in YARN Config.
+- [ ] KNOX
 
-### Setting up Governance Components
+### Add Governance Components
 When other services aren't running, this will fail during 'setup'.  When it does, click on Cloudera Manager Logo (upper left) and acknowledge 'leave'.  The service will still be installed.
-- Solr (will error when hdfs not running)
-- Atlas (will rename Solr Service to CDP-INFRA-SOLR) (will also fail when services aren't running.)
-- Ranger
+
+- [ ] Solr (will error when hdfs not running)
+- [ ] Atlas (will rename Solr Service to CDP-INFRA-SOLR) (will also fail when services aren't running.)
+- [ ] Ranger
 
 ### Validate / Check Safety Value Settings in:
-- HDFS
-- YARN
-- Hive
-- Hive On Tez
-- Spark
-- Oozie
-- TEZ
-- Kafka
-- ZooKeeper
+- [ ] HDFS
+- [ ] YARN
+- [ ] Hive
+- [ ] Hive On Tez
+- [ ] Spark
+- [ ] Oozie
+- [ ] TEZ
+- [ ] Kafka
+- [ ] ZooKeeper
 
 ### Tweak other Service Settings
 #### Hive
@@ -148,15 +175,18 @@ yarn.nodemanager.linux-container.executor.resources-handler.class ....
 #### ZooKeeper
 Add `4lw.commands.whitelist=mntr,conf,ruok` to zoo.cfg safety value to support Solr inspection and monitoring.
 
-## Configuring Governance (Step #5)
+## Step # 6 - Configuring Governance
 
 ### Ranger Admin
-Start Ranger Services
-- Action - Setup Ranger Plugin Services. (Adds linked repos to Ranger Services)
+- [ ] Start Ranger Services
+- [ ] Create Service Repos in Ranger. 
+> Ranger->Action->Setup Ranger Plugin Services. (Adds linked repos to Ranger Services)
 
 ### Migrate Ranger Policies
-[Ranger Service Upsert to new Service Repos](tooling/ranger_service_migration.yaml)
+- [ ] [Ranger Service Upsert to new Service Repos](tooling/ranger_service_migration.yaml)
+
 `ap tooling/ranger_service_migration.yaml`
+
 Failures expected when service repos aren't available on either side.
 - HDFS
 - YARN
@@ -168,73 +198,63 @@ Failures expected when service repos aren't available on either side.
 - Solr
 
 ### Ranger HDFS Policy Modifications
-- Add `hue` as 'SuperUser' to HDFS Policy ''
+- [ ] Add `hue` as 'SuperUser' to HDFS Policy ''
 > Allows CM to complete following installations.
-- Create policy for `/solr-infra` resource (hdfs path) and grant full rights to `solr` user.
+- [ ] Create policy for `/solr-infra` resource (hdfs path) and grant full rights to `solr` user.
 
 ### Activate Ranger for Each Service
 **NOTE: Do NOT activate Ranger for services not previously under Ranger control in Ambari.  This may cause service disruption.  We suggest addressing this after the migration.**
-- HDFS
-- YARN
-- Hive
-- Hive on Tez (HS2)
-- HBase
-- Kafka
-- Atlas
-- Knox
-- Solr
+
+- [ ] HDFS
+- [ ] YARN
+- [ ] Hive
+- [ ] Hive on Tez (HS2)
+- [ ] HBase
+- [ ] Kafka
+- [ ] Atlas
+- [ ] Knox
+- [ ] Solr
 
 ### Enable Kerberos
-- Kerberos
+- [ ] Kerberos
+> This will trigger a FULL cluster 'START'.  It's important to have all the previous configurations done before this to avoid having to 'restart' HDFS, which will take a long time for large clusters.
 > Add CM kdc user to 'retrieve keytab' for the HTTP/m01.streever.local service principal. (Needed when using IPA host as a host in the cluster)
 
-## Start Bringing the rest of the Cluster Up (Step #6)
-### Restart / Start Core Services
-- ZooKeeper
-- HDFS
-    - Create `/solr-infra` HDFS directory
-- YARN
-- CLDR-INFRA-SOLR
+## Step #7 - Complete Component Platform Dependencies
+
+### All Service Started
+
+All services should be started at this point.  If they aren't, research the error(s) and bring them online.
 
 ### Setting Up Service Dependencies
-* YARN
-    - Create Jobs History Dir
-    - Create NodeManager Remote Application Log Directory
-    - Install YARN MapReduce Framework JARs
-    - Install YARN Service Dependencies
-    - Create Ranger Plugin Audit Directory
-* Hive
-    - Create Hive User Directory
-    - Create Hive Warehouse Directory
-    - Create Hive Warehouse External Directory
-    - Create Ranger Plugin Audit Directory
-* Hive On Tez
-    - Create Ranger Plugin Audit Directory
-* TEZ
-    - Upload Tez tar file to HDFS
-* Oozie
-    - Install Oozie ShareLib
-* Kafka
-    - Create Ranger Kafka Plugin Audit Directory
-* HBase
-    - Create Ranger Plugin Audit Directory
-* Solr
-    - Create HDFS Home Directory
-    - Create Ranger Plugin Audit Directory
-
-### Start Remaining Services
-- Kafka
-- Start Hive Service
-    - Validate Hive Metastore Schema
-    > To ensure all previous schema upgrades have been applied.
-- Hive on TEZ
-- HBase
-- Oozie
-- Spark
-- Atlas
-- Hue
-- Knox
-          
+* YARN (Action Menu)
+    - [ ] Create Jobs History Dir
+    - [ ] Create NodeManager Remote Application Log Directory
+    - [ ] Install YARN MapReduce Framework JARs
+    - [ ] Install YARN Service Dependencies
+    - [ ] Create Ranger Plugin Audit Directory
+* Hive (Action Menu)
+    - [ ] Create Hive User Directory
+    - [ ] Create Hive Warehouse Directory
+    - [ ] Create Hive Warehouse External Directory
+    - [ ] Create Ranger Plugin Audit Directory
+* Hive On Tez (Action Menu)
+    - [ ] Create Ranger Plugin Audit Directory
+* TEZ (Action Menu)
+    - [ ] Upload Tez tar file to HDFS
+* Oozie (Action Menu)
+    - [ ] Install Oozie ShareLib
+* Kafka (Action Menu)
+    - [ ] Create Ranger Kafka Plugin Audit Directory
+* HBase (Action Menu)
+    - [ ] Create Ranger Plugin Audit Directory
+* Solr (Action Menu)
+    - [ ] Create HDFS Home Directory
+    - [ ] Create Ranger Plugin Audit Directory
+  
+## Step #8 - Smoke Tests
+TBD
+        
 ---
 
 
@@ -242,30 +262,49 @@ Failures expected when service repos aren't available on either side.
 
 ### CM to Ambari
 
-1. Stop ALL services in CM
-2. Disable CM Agents
+- [ ] Stop ALL services in CM
+- [ ] Disable CM Agents
+
     `ap cm/agent_disable.yaml`
-3. Enable and Configure Ambari HDP
+
+- [ ] Enable and Configure Ambari HDP
+
     `ap ambari/agent_enable.yaml`
+
     `ap reset/hdp_service_reset.yaml`
-4. Goto Ambari and Start Services    
+
+- [ ] Goto Ambari and Start Services    
 
 ### Ambari to CM
 
-1. Stop ALL services in Ambari
-2. Disable Ambari Agents
-    `ap ambari/agent_disable.yaml`
-3. Enable and Configure CM
-    `ap cm/agent_enable.yaml`
-    ? ...
+- [ ] Stop ALL services in Ambari
+- [ ] Disable Ambari Agents
 
-## RESET (HARD - Kill Environment)
+    `ap ambari/agent_disable.yaml`
+    
+- [ ] Enable and Configure CM
+    
+    `ap cm/agent_enable.yaml`
+    
+    ? need to reset links for binaries and configs. looking for hdp-select like function in CM
+
+## RESET (HARD - Kill CM Environment)
 
 ### CM
 
-1. Stop all components in CM
-2. Turn off, disable, and remove CM
+- [ ] Stop all components in CM
+- [ ] Turn off, disable, and remove CM
+
     `ap cm/cm_remove.yaml`
+    
+### Ambari:
+- [ ] Enable and Configure Ambari HDP
+
+    `ap ambari/agent_enable.yaml`
+    
+    `ap reset/hdp_service_reset.yaml`
+    
+- [ ] Goto Ambari and Start Services    
 
 
 

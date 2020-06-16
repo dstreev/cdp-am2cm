@@ -1,5 +1,3 @@
-- import_playbook:    ../../devops/db_backup.yaml
-
 - hosts:               manager
   become:              true
 
