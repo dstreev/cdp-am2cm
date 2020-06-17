@@ -6,6 +6,9 @@ alias ap=ansible-playbook
 alias ape=ansible-playbook --extra-vars
 alias apt=ansible-playbook --tags
 ```
+## Goal
+
+Provide straight forward checklist of items to complete for a successful transition.  With a focus on only having to start HDFS 1 time to reduce, as much as possible, the outage window.
 
 ## Assumptions
 - [ ] Source Cluster (Ambari) is NOT Kerberized.  That's because we are getting a Kerberos ticket for any of the playbooks run against the Ambari Cluster.  It 'can' be done, just hasn't for this version of the process.
@@ -35,7 +38,8 @@ __SKIP IF USING MOD'd version__
 **[Configure AM2CM for Environment](tooling/am2cm_configure.yaml)**
 `ap tooling/am2cm_configure.yaml`
 
-## Step #1 - Cloudera Manager Installation
+## Step #1 - [Cloudera Manager Installation](https://youtu.be/isdZNN-cjRE)
+
 **[Install Cloudera Manager](cm/cm_install.yaml)**
 
 - [ ] `ap cm/cm_install.yaml`
@@ -54,7 +58,7 @@ This installs CM and creates the databases for CM and Report Manager and deploys
 - [ ] Add Cloudera Management Service
     - [ ] Start the CMS Service
 
-## Step #2 - Transition to Cloudera Manager
+## Step #2 - [Transition to Cloudera Manager](https://youtu.be/beWh_3RXqAY)
 
 **NOTE: Waiting for silent mode in am2cm Tool**
 
@@ -80,7 +84,7 @@ Once the `-s` mode is available for am2cm run the entire `transition.yaml`:
 
 `ap tooling/transition.yaml` 
 
-## Step #3 - Deployment in Cloudera Manager
+## Step #3 - [Deployment in Cloudera Manager](https://youtu.be/I3YOEVqqeSQ)
 
 In Cloudera Manager:
 
@@ -105,7 +109,7 @@ In Cloudera Manager:
 - [ ] Activate the Parcel on all hosts.  
 > This will reconfigure all the symlinks for the cluster configurations.
 
-## Step #4 - Reseting the Hadoop Environment
+## Step #4 - [Reseting the Hadoop Environment](https://youtu.be/5flAKpIOtvM)
 The goal here is to NOT start services until required and to minimize HDFS restarts to manage time.
 
 ### First Phase Cleanup
@@ -122,7 +126,8 @@ The goal here is to NOT start services until required and to minimize HDFS resta
 From Namenode as `hdfs` user:
 - [ ] formatZK `hdfs zkfc -formatZK`
 
-## Step #5 - Configuring Basic Services
+## Step #5 - [Configuring Basic Services](https://youtu.be/W0tER8CVLIY)
+
 ### Enable TLS Security
 - [ ] TLS
 
@@ -149,33 +154,10 @@ When other services aren't running, this will fail during 'setup'.  When it does
 - [ ] Kafka
 - [ ] ZooKeeper
 
-### Tweak other Service Settings
-#### Hive
-##### #1
-Remove port from metastore db url.
-
-#### YARN
-##### #1
-Issue with yarn.nodemanager.runtime.linux.allowed-runtimes (remove docker)
-
-##### #2
-Issue Yarn NodeManagers fail to start with error:
- /var/lib/yarn-ce/bin/container-executor error=13, permission denied.
-dstreev@w01 /var/lib/yarn-ce/bin
----Sr-s--- 1 root yarn 414398 May 20 16:33 container-executor
-Fix:
-yarn.nodemanager.linux-container-executor.group (reset to 'yarn').  Is set to 'hadoop' in HDP.
-
-##### #3
-Check/Fix path for: yarm.nodemanager.linux-container.executor.group=yarn
-
-##### #4
-yarn.nodemanager.linux-container.executor.resources-handler.class ....
-
 #### ZooKeeper
 Add `4lw.commands.whitelist=mntr,conf,ruok` to zoo.cfg safety value to support Solr inspection and monitoring.
 
-## Step # 6 - Configuring Governance
+## Step # 6 - [Configuring Governance](https://youtu.be/1ehBv4thFNA)
 
 ### Ranger Admin
 - [ ] Start Ranger Services
@@ -220,7 +202,7 @@ Failures expected when service repos aren't available on either side.
 > This will trigger a FULL cluster 'START'.  It's important to have all the previous configurations done before this to avoid having to 'restart' HDFS, which will take a long time for large clusters.
 > Add CM kdc user to 'retrieve keytab' for the HTTP/m01.streever.local service principal. (Needed when using IPA host as a host in the cluster)
 
-## Step #7 - Complete Component Platform Dependencies
+## Step #7 - [Complete Component Platform Dependencies](https://youtu.be/a7qoHXILhdQ)
 
 ### All Service Started
 
