@@ -1,3 +1,32 @@
 - import_playbook: kafka_reset.yaml
 
 - import_playbook: zookeeper_reset.yaml
+
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: Clean up yarn directories
+      file:
+        path: '{{ item.path }}'
+        state: absent
+      ignore_errors: yes
+      with_items:
+        - { path: '/hadoop/yarn/local' }
+        - { path: '/hadoop/yarn/log' }
+      tags:
+        - yarn
+
+    - name: Clean up HDP Files
+      file:
+        path: '{{ item.file }}'
+        state: absent
+      with_items:
+        - { file: '/usr/bin/pyspark' }
+        - { file: '/usr/bin/spark-shell' }
+        - { file: '/usr/bin/spark-sql' }
+        - { file: '/usr/bin/spark-class' }
+        - { file: '/usr/bin/find-spark-home' }
+        - { file: '/usr/bin/sparkR' }
+      tags:
+        - spark

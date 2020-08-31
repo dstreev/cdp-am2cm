@@ -11,7 +11,7 @@ alias apt=ansible-playbook --tags
 Provide straight forward checklist of items to complete for a successful transition.  With a focus on only having to start HDFS 1 time to reduce, as much as possible, the outage window.
 
 ## Assumptions
-- [ ] Source Cluster (Ambari) is NOT Kerberized.  That's because we are getting a Kerberos ticket for any of the playbooks run against the Ambari Cluster.  It 'can' be done, just hasn't for this version of the process.
+- [ ] Source Cluster (Ambari) is NOT Kerberized.  That's because we aren't getting a Kerberos ticket for any of the playbooks run against the Ambari Cluster.  It 'can' be done, just hasn't for this version of the process.
 - [ ] Running CDP-DC (Ambari 7.1.0+)
 
 ## Prep

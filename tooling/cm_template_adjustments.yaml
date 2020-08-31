@@ -1,0 +1,5 @@
+- hosts: edge_primary
+
+  tasks:
+    tasks:
+      - name: Fix some CM Template Issues
