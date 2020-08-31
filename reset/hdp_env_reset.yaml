@@ -29,6 +29,19 @@
       tags:
         - conf
 
+    - name: Clean up HDP Files
+      file:
+        src: '/usr/hdp/current/spark2-client/bin/{{ item.executable }}'
+        dest: '/usr/bin/{{ item.executable }}'
+        state: link
+      with_items:
+        - { executable: 'pyspark' }
+        - { executable: 'spark-shell' }
+        - { executable: 'spark-sql' }
+        - { executable: 'spark-class' }
+        - { executable: 'find-spark-home' }
+        - { executable: 'sparkR' }
+
     - name: Clean up yarn directories
       file:
         path: '{{ item.path }}'
